@@ -61,7 +61,7 @@ Activate a skill using the `/skill` command:
 > /skill coding-assistant
 ```
 
-The skill content is applied as instructions to the agent.
+The skill content is applied as instructions to the agent. To start with a skill already applied, use `-s/--skill` (see [CLI](#-s--skill--apply-a-skill-at-startup)).
 
 ### Skill Priority
 
@@ -193,6 +193,15 @@ go-magnetar -f <input-file>
 Reads input from the specified file, sends it to the agent, prints the answer, and exits. This mode is useful for scripting and batch processing.
 
 > **Note:** In `-f/--file` mode, text preprocessors are applied but chat commands (e.g., `/readonly`, `/fetch`, `/index`) are not available. The text preprocessor expands placeholders like `{{home}}`, `{{uuid}}`, `{{date}}`, `{{now}}`, and `{{file:filename}}`.
+
+### `-s/--skill` — apply a skill at startup
+
+```
+go-magnetar -s <skill_name>
+go-magnetar -s <skill_name> -f <input-file>
+```
+
+Applies the skill before any input, as `/skill <skill_name>` would. With `-f/--file`, the skill and the file's text go to the model as one message, the same as `/skill <skill_name> <text>`. In interactive mode, the skill is added to the conversation without calling the model, and applies to your first question. It works with `--session` and `-p/--profile`. An unknown or disabled skill stops go-magnetar with an error before anything is sent.
 
 ### `--enable-timing` — show execution time
 

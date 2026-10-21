@@ -169,6 +169,11 @@ func (a *ChatAgent) SetMessages(msgs []openai.ChatCompletionMessage) {
 	a.messages = msgs
 }
 
+// AddUserMessage appends a user message to the history without asking the model.
+func (a *ChatAgent) AddUserMessage(content string) {
+	a.messages = append(a.messages, openai.ChatCompletionMessage{Role: openai.ChatMessageRoleUser, Content: content})
+}
+
 // --- AgentHandle implementation ---
 
 // agentHandle is a private adapter that exposes ChatAgent internals to chat

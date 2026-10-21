@@ -2,14 +2,78 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+
 	"github.com/wmentor/go-magnetar/internal/config"
+	"github.com/wmentor/go-magnetar/internal/plugin"
+	"github.com/wmentor/go-magnetar/internal/plugin/testdata"
+	skillplugin "github.com/wmentor/go-magnetar/internal/plugins/chatcmd/skill"
 	"github.com/wmentor/go-magnetar/internal/printer"
 )
+
+type commandHub struct {
+	commands []plugin.ChatCommand
+}
+
+func (h *commandHub) RegisterTool(plugin.LLMTool) {}
+func (h *commandHub) RegisterChatCommand(cmd plugin.ChatCommand) {
+	h.commands = append(h.commands, cmd)
+}
+func (h *commandHub) RegisterPreprocessor(plugin.PreprocessorFunc) {}
+func (h *commandHub) Go(func(ctx context.Context))                 {}
+func (h *commandHub) Stop()                                        {}
+
+func TestApplySkill(t *testing.T) {
+	t.Parallel()
+
+	store := testdata.NewSkillStore(t)
+	store.EXPECT().Get(mock.Anything, "review").
+		Return(&plugin.Skill{Name: "review", Content: "Review the code.", Enable: true}, nil)
+	store.EXPECT().Get(mock.Anything, "draft").
+		Return(&plugin.Skill{Name: "draft", Content: "Not ready.", Enable: false}, nil)
+	hub := &commandHub{}
+	if err := (&skillplugin.Plugin{}).Init(&plugin.State{SkillStore: store}, hub); err != nil {
+		t.Fatalf("skill plugin init: %v", err)
+	}
+
+	t.Run("skill alone, as at the start of a chat", func(t *testing.T) {
+		got, err := applySkill(hub.commands, "review", "")
+		if err != nil {
+			t.Fatalf("applySkill returned error: %v", err)
+		}
+		if !strings.HasPrefix(got, "# SKILL: review\n\nReview the code.") || strings.Contains(got, "# Problem:") {
+			t.Fatalf("applySkill = %q", got)
+		}
+	})
+
+	t.Run("skill and input in one message, as with -f", func(t *testing.T) {
+		got, err := applySkill(hub.commands, "review", "Check main.go\nplease")
+		if err != nil {
+			t.Fatalf("applySkill returned error: %v", err)
+		}
+		if !strings.HasPrefix(got, "# SKILL: review") || !strings.HasSuffix(got, "# Problem:\n\nCheck main.go\nplease\n") {
+			t.Fatalf("applySkill = %q", got)
+		}
+	})
+
+	t.Run("disabled skill is an error", func(t *testing.T) {
+		if _, err := applySkill(hub.commands, "draft", ""); err == nil || !strings.Contains(err.Error(), "not enabled") {
+			t.Fatalf("applySkill error = %v, want not enabled", err)
+		}
+	})
+
+	t.Run("no skill command is an error", func(t *testing.T) {
+		if _, err := applySkill(nil, "review", ""); err == nil {
+			t.Fatal("applySkill returned no error without a skill command")
+		}
+	})
+}
 
 func TestPrintEnabledModules(t *testing.T) {
 	tests := []struct {

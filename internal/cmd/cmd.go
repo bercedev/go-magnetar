@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/alecthomas/kong"
 	"github.com/pkg/errors"
@@ -28,6 +29,7 @@ type Globals struct {
 	Session  string `type:"path" help:"Load conversation session from file"`
 	ReadOnly bool   `long:"read-only" help:"Run in read-only mode"`
 	Timing   bool   `name:"enable-timing" help:"Show the execution time of every answer"`
+	Skill    string `short:"s" help:"Skill to apply at startup"`
 }
 
 type cli struct {
@@ -91,6 +93,14 @@ func Execute() error {
 
 	defer plugin.Stop()
 
+	// Checked before anything reaches the model: an unknown or disabled skill is an error.
+	var skillContent string
+	if root.Skill != "" {
+		if skillContent, err = applySkill(plugin.ChatCommands(), root.Skill, ""); err != nil {
+			return err
+		}
+	}
+
 	rootFS, err := os.OpenRoot(workDir)
 	if err != nil {
 		return fmt.Errorf("open work dir error: %w", err)
@@ -132,6 +142,13 @@ func Execute() error {
 			}
 		}
 
+		// As `/skill <name> <input>` would send it: the skill and the input in one message.
+		if root.Skill != "" {
+			if txt, err = applySkill(plugin.ChatCommands(), root.Skill, txt); err != nil {
+				return err
+			}
+		}
+
 		answer, err := agent.Ask(txt)
 		if err != nil {
 			return errors.Wrap(err, "agent error")
@@ -142,7 +159,32 @@ func Execute() error {
 		return nil
 	}
 
+	if skillContent != "" {
+		// No model call yet: the skill applies to the first question.
+		agent.AddUserMessage(skillContent)
+		printer.ToolCall(printer.IconDone, "skill "+root.Skill+" was applied")
+		printer.EmptyLine()
+	}
+
 	return agent.Run(state)
+}
+
+// applySkill returns what the /skill chat command hands to the model for `/skill <name> <text>`.
+func applySkill(commands []plugin.ChatCommand, name, text string) (string, error) {
+	for _, c := range commands {
+		if c.Name != "skill" {
+			continue
+		}
+		resp, err := c.Execute(context.Background(), &plugin.ChatCommandInput{
+			Args:    strings.TrimSpace(name + " " + text),
+			Printer: printer.GetDefault(),
+		})
+		if err != nil {
+			return "", err
+		}
+		return resp.Content, nil
+	}
+	return "", errors.New("the skill command is not available")
 }
 
 func readFileInput(filename string, stdin io.Reader) ([]byte, error) {
