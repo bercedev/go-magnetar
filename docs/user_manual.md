@@ -200,7 +200,7 @@ Reads input from the specified file, sends it to the agent, prints the answer, a
 go-magnetar --enable-timing
 ```
 
-Prints the execution time after every answer (`— Execution time: 1.234s`). While the flag is set, timing stays on even after `/timing off`; without it, the `/timing on|off` chat command turns the display on and off.
+Prints the execution time after every answer (`— Execution time: 1.234s`). The flag only sets the starting value: the `/timing on|off` chat command still turns the display on and off during the session.
 
 ## Commands
 

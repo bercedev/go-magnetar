@@ -722,7 +722,8 @@ func (a *ChatAgent) Run(state *plugin.State) error {
 			continue
 		}
 
-		start = time.Now()
+		// Measured from before the chat command, so a command that hands its
+		// content to the model is counted in the answer's time.
 		answer, err := a.Ask(line)
 		elapsed = time.Since(start)
 		if err != nil {
@@ -740,7 +741,7 @@ func (a *ChatAgent) Run(state *plugin.State) error {
 
 // printTiming prints how long an answer took when /timing or --enable-timing turned it on.
 func printTiming(state *plugin.State, elapsed time.Duration) {
-	if state.TimingEnabled.Load() || state.TimingForced {
+	if state.TimingEnabled.Load() {
 		fmt.Fprintf(os.Stdout, "— Execution time: %s\n\n", formatDuration(elapsed))
 	}
 }

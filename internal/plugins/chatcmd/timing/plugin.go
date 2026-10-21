@@ -32,9 +32,6 @@ func (p *Plugin) execute(_ context.Context, params *plugin.ChatCommandInput) (*p
 		p.state.TimingEnabled.Store(true)
 		return message("Execution time measurement enabled."), nil
 	case "off":
-		if p.state.TimingForced {
-			return message("Execution time measurement stays on: --enable-timing is set."), nil
-		}
 		p.state.TimingEnabled.Store(false)
 		return message("Execution time measurement disabled."), nil
 	default:

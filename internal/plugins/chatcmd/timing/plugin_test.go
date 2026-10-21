@@ -65,17 +65,17 @@ func TestTimingOnOffAndStatus(t *testing.T) {
 	}
 }
 
-func TestTimingOffKeepsTheCLIFlag(t *testing.T) {
+func TestTimingOffTurnsOffTimingStartedByTheCLIFlag(t *testing.T) {
 	t.Parallel()
-	state := &plugin.State{TimingForced: true}
+	// --enable-timing only sets the starting value; /timing off still applies.
+	state := &plugin.State{}
 	state.TimingEnabled.Store(true)
 	command := registeredCommand(t, state)
 
-	want := "Execution time measurement stays on: --enable-timing is set.\n"
-	if got := run(t, command, "off"); got != want {
+	if got, want := run(t, command, "off"), "Execution time measurement disabled.\n"; got != want {
 		t.Errorf("/timing off: got %q, want %q", got, want)
 	}
-	if !state.TimingEnabled.Load() {
-		t.Error("/timing off must not turn off timing enabled with --enable-timing")
+	if state.TimingEnabled.Load() {
+		t.Error("/timing off must turn off timing that --enable-timing turned on")
 	}
 }

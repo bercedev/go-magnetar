@@ -247,16 +247,16 @@ Execution time measurement disabled.
 - `off` — disable execution time display
 - (no args) — show current status
 
-The time shown is that of the answer (`Ask`), or of the chat command when it has no content to send to the model. Only one value is shown per response.
+The time shown runs from the chat command (if one was called) to the end of the answer, or covers only the chat command when it has no content to send to the model. Only one value is shown per response.
 
 **CLI Flag:**
-The `--enable-timing` flag provides an alternative way to enable timing globally:
+The `--enable-timing` flag starts a session with timing on:
 
 ```bash
 go-magnetar --enable-timing
 ```
 
-When the flag is set, timing is always enabled regardless of `/timing` commands.
+It only sets the starting value; `/timing off` still turns the display off.
 
 **Output Format:**
 Timing is displayed after each response as a single line:

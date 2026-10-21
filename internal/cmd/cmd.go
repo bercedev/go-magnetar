@@ -83,7 +83,6 @@ func Execute() error {
 	responseStore := response.New(plugin.DefaultResponseStoreSize) // circular buffer with capacity DefaultResponseStoreSize
 
 	state := &plugin.State{Config: cfg, ReadOnly: root.ReadOnly, SkillStore: skillStore, ResponseStore: responseStore}
-	state.TimingForced = root.Timing
 	state.TimingEnabled.Store(root.Timing)
 
 	if err := plugin.InitAll(state); err != nil {
