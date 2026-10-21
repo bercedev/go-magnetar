@@ -10,6 +10,7 @@ go-magnetar provides a unified CLI interface with the following flags:
 | `-f, --file <path>` | Non-interactive mode: read input from file (or stdin if `-`), send to agent, print answer, and exit. Chat commands are not available in this mode. |
 | `--session <path>` | Load a previously saved conversation session from a JSON file. |
 | `--read-only` | Run in read-only mode. Disables file write operations and shell modifications. |
+| `--enable-timing` | Enable execution time display for all responses. When set, timing is always enabled regardless of `/timing` commands. |
 | `-h, --help` | Show help and exit. |
 | `-v, --version` | Show version information and exit. |
 
@@ -33,6 +34,9 @@ go-magnetar --session session.json
 
 # Run in read-only mode
 go-magnetar --read-only
+
+# Enable execution time display
+go-magnetar --enable-timing
 
 # Combined flags
 go-magnetar -p production --read-only

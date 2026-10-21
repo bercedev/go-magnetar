@@ -696,7 +696,9 @@ func (a *ChatAgent) Run(state *plugin.State) error {
 			}
 		}
 
+		start := time.Now()
 		cmdResponse, err := a.handleCommand(line, plugin.ChatCommands())
+		elapsed := time.Since(start)
 		if err == nil {
 			if cmdResponse != nil {
 				if cmdResponse.Exit {
@@ -707,6 +709,7 @@ func (a *ChatAgent) Run(state *plugin.State) error {
 					a.printAnswer(state, cmdResponse.Stdout, cmdResponse.NoLog)
 				}
 				if cmdResponse.Content == "" {
+					printTiming(state, elapsed)
 					continue
 				}
 				line = cmdResponse.Content
@@ -719,7 +722,9 @@ func (a *ChatAgent) Run(state *plugin.State) error {
 			continue
 		}
 
+		start = time.Now()
 		answer, err := a.Ask(line)
+		elapsed = time.Since(start)
 		if err != nil {
 			printer.Error("chat: failed to get answer", "err", err)
 			fmt.Fprintln(os.Stdout, "Error: failed to get response. Please try again.")
@@ -727,7 +732,23 @@ func (a *ChatAgent) Run(state *plugin.State) error {
 		}
 
 		a.printAnswer(state, answer, false)
+		printTiming(state, elapsed)
 	}
 
 	return nil
+}
+
+// printTiming prints how long an answer took when /timing or --enable-timing turned it on.
+func printTiming(state *plugin.State, elapsed time.Duration) {
+	if state.TimingEnabled.Load() || state.TimingForced {
+		fmt.Fprintf(os.Stdout, "— Execution time: %s\n\n", formatDuration(elapsed))
+	}
+}
+
+// formatDuration renders d as "850ms" under a second and "1.234s" from a second up.
+func formatDuration(d time.Duration) string {
+	if d < time.Second {
+		return fmt.Sprintf("%dms", d.Milliseconds())
+	}
+	return fmt.Sprintf("%.3fs", d.Seconds())
 }

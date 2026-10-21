@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"sync/atomic"
 
 	"github.com/sashabaranov/go-openai"
 
@@ -49,6 +50,8 @@ type State struct {
 	ReadOnly      bool          // if true, disable file write operations.
 	SkillStore    SkillStore    // skill storage interface.
 	ResponseStore ResponseStore // response storage interface (circular buffer with capacity DefaultResponseStoreSize).
+	TimingEnabled atomic.Bool   // if true, the chat REPL prints how long each answer took (/timing).
+	TimingForced  bool          // set by --enable-timing: timing stays on whatever /timing says.
 }
 
 // PreprocessorFunc is a function that preprocesses text.

@@ -22,6 +22,7 @@ go-magnetar provides several built-in chat commands accessible from the interact
 | `/confluence.edit` | — | Edit a Confluence page using Markdown content from a file |
 | `/session.save` | — | Save current conversation session to a file |
 | `/profile` | — | Show current profile or switch to a different profile |
+| `/timing` | — | Toggle execution time display (on\|off) |
 | `/skill` | `/sk` | List available skills or load/activate a skill |
 
 ## /fetch Command
@@ -223,6 +224,50 @@ Switch to a different profile:
 > /profile production
 Switched to profile: production
 ```
+
+## /timing Command
+
+Display or toggle execution time measurement:
+
+```
+> /timing on
+Execution time measurement enabled.
+— Execution time: 0ms
+
+> What is Go?
+Go is a statically typed, compiled programming language designed for simplicity, reliability, and efficiency.
+— Execution time: 1.234s
+
+> /timing off
+Execution time measurement disabled.
+```
+
+**Parameters:**
+- `on` — enable execution time display
+- `off` — disable execution time display
+- (no args) — show current status
+
+The time shown is that of the answer (`Ask`), or of the chat command when it has no content to send to the model. Only one value is shown per response.
+
+**CLI Flag:**
+The `--enable-timing` flag provides an alternative way to enable timing globally:
+
+```bash
+go-magnetar --enable-timing
+```
+
+When the flag is set, timing is always enabled regardless of `/timing` commands.
+
+**Output Format:**
+Timing is displayed after each response as a single line:
+
+```
+— Execution time: 1.234s
+```
+
+Duration is formatted as:
+- `Xms` for durations < 1 second
+- `X.XXXs` for durations ≥ 1 second
 
 ## Command Syntax
 

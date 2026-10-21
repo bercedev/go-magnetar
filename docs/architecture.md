@@ -28,6 +28,7 @@ internal/
       write/plugin.go            — /write (write content to file)
       version/plugin.go          — /version (print version)
       readonly/plugin.go         — /readonly (toggle readonly mode)
+      timing/plugin.go           — /timing (toggle execution time display)
       fetch/plugin.go            — /fetch (fetch URL content and display/save)
     jira/plugin.go               — jira_task_get LLM tool (init → Register)
     cve/plugin.go                — cve LLM tool (init → Register)

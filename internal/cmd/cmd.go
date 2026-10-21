@@ -27,6 +27,7 @@ type Globals struct {
 	Profile  string `short:"p" help:"Profile name to use"`
 	Session  string `type:"path" help:"Load conversation session from file"`
 	ReadOnly bool   `long:"read-only" help:"Run in read-only mode"`
+	Timing   bool   `name:"enable-timing" help:"Show the execution time of every answer"`
 }
 
 type cli struct {
@@ -82,6 +83,8 @@ func Execute() error {
 	responseStore := response.New(plugin.DefaultResponseStoreSize) // circular buffer with capacity DefaultResponseStoreSize
 
 	state := &plugin.State{Config: cfg, ReadOnly: root.ReadOnly, SkillStore: skillStore, ResponseStore: responseStore}
+	state.TimingForced = root.Timing
+	state.TimingEnabled.Store(root.Timing)
 
 	if err := plugin.InitAll(state); err != nil {
 		return err

@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/wmentor/go-magnetar/internal/plugin"
 )
@@ -169,5 +170,24 @@ func TestMatchCommand(t *testing.T) {
 					tt.nameInput, tt.cmd.Name, tt.cmd.Aliases, result, tt.expected)
 			}
 		})
+	}
+}
+
+func TestFormatDuration(t *testing.T) {
+	tests := []struct {
+		d    time.Duration
+		want string
+	}{
+		{0, "0ms"},
+		{850 * time.Millisecond, "850ms"},
+		{999*time.Millisecond + 900*time.Microsecond, "999ms"},
+		{time.Second, "1.000s"},
+		{1234 * time.Millisecond, "1.234s"},
+		{75 * time.Second, "75.000s"},
+	}
+	for _, tt := range tests {
+		if got := formatDuration(tt.d); got != tt.want {
+			t.Errorf("formatDuration(%v) = %q, want %q", tt.d, got, tt.want)
+		}
 	}
 }

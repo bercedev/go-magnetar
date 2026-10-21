@@ -245,6 +245,7 @@ The agent will now search the knowledge base before answering any question.
 | `/stat` | — | Show context stats (tokens, messages, models) |
 | `/profile [name]` | — | Show or switch profile |
 | `/readonly` | — | Toggle read-only mode |
+| `/timing [on\|off]` | — | Show or toggle the execution time after each answer |
 | `/confluence.edit <url> <content>` | — | Edit a Confluence page by URL with Markdown content |
 | `/idxtab <file>` | — | Index multiple documents from a JSON lines file |
 | `/session.save <file>` | — | Save conversation to a JSON file |
@@ -295,6 +296,7 @@ See [docs/security.md](./docs/security.md) for details.
 | `-f <file>` | Non-interactive mode: read input from file, print answer, exit |
 | `--session <file>` | Load a previously saved conversation session |
 | `--read-only` | Run in read-only mode (disable file writes and shell modifications) |
+| `--enable-timing` | Show the execution time after every answer, whatever `/timing` says |
 
 ```bash
 # Non-interactive (scripting / batch)
@@ -308,6 +310,9 @@ go-magnetar -p production
 
 # Run in read-only mode
 go-magnetar --read-only
+
+# Show the execution time of every answer
+go-magnetar --enable-timing
 ```
 
 > **Note:** In `-f` mode, chat commands (`/index`, `/fetch`, etc.) are not available. Text preprocessor placeholders like `{{date}}`, `{{uuid}}`, `{{file:path}}` are expanded.
