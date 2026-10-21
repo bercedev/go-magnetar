@@ -6,6 +6,8 @@ The `web_fetch` tool fetches content from URLs and returns it in Markdown format
 
 `web_fetch` is a search tool that intelligently handles different URL types by detecting the platform and using the appropriate API or content extraction method.
 
+Set `web.disable.fetch: true` in `plugins/web.yml` to turn it off: the tool is then not offered to the model (see [Configuration](configuration.md#web-web)).
+
 ## Signature
 
 ```go

@@ -79,7 +79,7 @@ See [chat_agent_ask.md](./chat_agent_ask.md) for details on tool execution categ
 
 ## Search Tools
 
-go-magnetar provides two independent search tools: `web_search` and `rag_search`. Each tool can be called separately or together based on the query requirements.
+go-magnetar provides two independent search tools: `web_search` and `rag_search`. Each tool can be called separately or together based on the query requirements. With `web.disable.search: true` the `web_search` tool is not offered (see [Configuration](configuration.md#web-web)).
 
 ### web_search
 

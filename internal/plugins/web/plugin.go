@@ -15,6 +15,8 @@ func init() {
 // Plugin wraps the web tools and exposes web_fetch and web_search as LLM tools.
 // The WebTools instance is created lazily on first use so that the
 // agent's working-directory Root (set via plugin.SetRoot) is available.
+// web.disable.fetch and web.disable.search turn a tool off: it is not
+// registered, so the model never sees it.
 type Plugin struct {
 	mu    sync.Mutex
 	state *plugin.State
@@ -26,29 +28,33 @@ func (p *Plugin) Init(s *plugin.State, hub plugin.Hub) error {
 	p.state = s
 
 	// Register web_fetch tool
-	hub.RegisterTool(plugin.LLMTool{
-		Definition: web.StaticDefinition,
-		Execute: func(_ context.Context, args string) (string, error) {
-			t, err := p.get()
-			if err != nil {
-				return "", err
-			}
-			return t.Dispatch("web_fetch", args), nil
-		},
-	})
+	if !s.Config.Bool("web.disable.fetch") {
+		hub.RegisterTool(plugin.LLMTool{
+			Definition: web.StaticDefinition,
+			Execute: func(_ context.Context, args string) (string, error) {
+				t, err := p.get()
+				if err != nil {
+					return "", err
+				}
+				return t.Dispatch("web_fetch", args), nil
+			},
+		})
+	}
 
 	// Register web_search tool
-	hub.RegisterTool(plugin.LLMTool{
-		Definition:   web.StaticDefinitionSearch,
-		IsSearchTool: true,
-		Execute: func(_ context.Context, args string) (string, error) {
-			t, err := p.get()
-			if err != nil {
-				return "", err
-			}
-			return t.Dispatch("web_search", args), nil
-		},
-	})
+	if !s.Config.Bool("web.disable.search") {
+		hub.RegisterTool(plugin.LLMTool{
+			Definition:   web.StaticDefinitionSearch,
+			IsSearchTool: true,
+			Execute: func(_ context.Context, args string) (string, error) {
+				t, err := p.get()
+				if err != nil {
+					return "", err
+				}
+				return t.Dispatch("web_search", args), nil
+			},
+		})
+	}
 	return nil
 }
 

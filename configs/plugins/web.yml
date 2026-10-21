@@ -1,0 +1,4 @@
+web:
+  disable:
+    fetch: false  # disable the web_fetch tool (default: false)
+    search: false  # disable the web_search tool (default: false)

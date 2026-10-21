@@ -133,6 +133,15 @@ All plugins are disabled by default. Enable a plugin by setting `enable: true`:
 | `ask` | boolean | Ask user for confirmation when guard blocks a command (default: `false`) |
 | `allow` | array of strings | List of trusted utilities that are considered safe to execute (default: empty array). Example: `["ls", "pwd"]`. |
 
+#### Web (`web`)
+
+| Key | Type | Description |
+|---|---|---|
+| `disable.fetch` | boolean | Disable the `web_fetch` tool. The model is not offered it (default: `false`) |
+| `disable.search` | boolean | Disable the `web_search` tool. The model is not offered it; `rag_search` is unaffected (default: `false`) |
+
+These live in `plugins/web.yml`. Add `plugins/web.yml` to the `include` list of an existing `config.yml`; new configurations include it already.
+
 #### SSH (`ssh`)
 
 | Key | Type | Description |

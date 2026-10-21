@@ -23,6 +23,7 @@ include:
   - plugins/rag.yml
   - plugins/guard.yml
   - plugins/ssh.yml
+  - plugins/web.yml
 
 profiles:
   default:
