@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
+	"sync/atomic"
 )
 
 type Icon = string
@@ -42,22 +44,34 @@ type Printer interface {
 	EmptyLine()
 }
 
+// printer is safe for concurrent use: writes are serialized, so the lines of
+// concurrent callers don't interleave.
 type printer struct {
+	mu      sync.Mutex
 	out     io.Writer
-	verbose bool
+	verbose atomic.Bool
 }
 
 func New(out io.Writer, verbose bool) Printer {
-	return &printer{verbose: verbose, out: out}
+	p := &printer{out: out}
+	p.verbose.Store(verbose)
+	return p
 }
 
-var defaultPrinter Printer
+var (
+	defaultMu      sync.RWMutex
+	defaultPrinter Printer
+)
 
 func SetDefault(p Printer) {
+	defaultMu.Lock()
+	defer defaultMu.Unlock()
 	defaultPrinter = p
 }
 
 func GetDefault() Printer {
+	defaultMu.RLock()
+	defer defaultMu.RUnlock()
 	return defaultPrinter
 }
 
@@ -66,35 +80,35 @@ func init() {
 }
 
 func Verbose(enable bool) {
-	defaultPrinter.Verbose(enable)
+	GetDefault().Verbose(enable)
 }
 
 func Debug(message string, params ...any) {
-	defaultPrinter.Debug(message, params...)
+	GetDefault().Debug(message, params...)
 }
 
 func Info(message string, params ...any) {
-	defaultPrinter.Info(message, params...)
+	GetDefault().Info(message, params...)
 }
 
 func Warn(message string, params ...any) {
-	defaultPrinter.Warn(message, params...)
+	GetDefault().Warn(message, params...)
 }
 
 func Error(message string, params ...any) {
-	defaultPrinter.Error(message, params...)
+	GetDefault().Error(message, params...)
 }
 
 func Print(typeIcon string, message string, params ...any) {
-	defaultPrinter.Print(typeIcon, message, params...)
+	GetDefault().Print(typeIcon, message, params...)
 }
 
 func ToolCall(typeIcon string, message string, params ...any) {
-	defaultPrinter.ToolCall(typeIcon, message, params...)
+	GetDefault().ToolCall(typeIcon, message, params...)
 }
 
 func (p *printer) Debug(message string, params ...any) {
-	if p.verbose {
+	if p.verbose.Load() {
 		p.Print("", message, params...)
 	}
 }
@@ -112,7 +126,7 @@ func (p *printer) Warn(message string, params ...any) {
 }
 
 func (p *printer) ToolCall(typeIcon string, message string, params ...any) {
-	if p.verbose {
+	if p.verbose.Load() {
 		p.Print(typeIcon, message, params...)
 	}
 }
@@ -137,21 +151,25 @@ func (p *printer) Print(typeIcon string, message string, params ...any) {
 		}
 		sb.WriteString("]")
 	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	fmt.Fprintln(p.out, sb.String())
 }
 
 func ToolEmptyLine() {
-	defaultPrinter.ToolEmptyLine()
+	GetDefault().ToolEmptyLine()
 }
 
 func Ask(question string) string {
-	return defaultPrinter.Ask(question)
+	return GetDefault().Ask(question)
 }
 
 func (p *printer) Ask(question string) string {
 	p.Print(IconRobot, question)
 	for {
+		p.mu.Lock()
 		fmt.Fprintf(p.out, " %s ", IconIam)
+		p.mu.Unlock()
 
 		var answer string
 		_, _ = fmt.Scanln(&answer)
@@ -164,28 +182,33 @@ func (p *printer) Ask(question string) string {
 }
 
 func (p *printer) ToolEmptyLine() {
-	if p.verbose {
-		fmt.Fprintln(p.out, "")
+	if p.verbose.Load() {
+		p.EmptyLine()
 	}
 }
 
 func EmptyLine() {
-	defaultPrinter.EmptyLine()
+	GetDefault().EmptyLine()
 }
 
 func (p *printer) EmptyLine() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	fmt.Fprintln(p.out, "")
 }
 
 func (p *printer) Verbose(enable bool) {
-	p.verbose = enable
+	p.verbose.Store(enable)
 }
 
 func (p *printer) PrintRaw(data string) {
-	if p.verbose {
-		p.EmptyLine()
+	if p.verbose.Load() {
+		// one lock for the whole block, so another caller's line can't land inside it
+		p.mu.Lock()
+		defer p.mu.Unlock()
+		fmt.Fprintln(p.out, "")
 		fmt.Fprintln(p.out, " "+strings.ReplaceAll(data, "\n", "\n "))
-		p.EmptyLine()
+		fmt.Fprintln(p.out, "")
 	}
 }
 

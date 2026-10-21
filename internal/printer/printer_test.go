@@ -3,8 +3,25 @@ package printer
 import (
 	"bytes"
 	"strings"
+	"sync"
 	"testing"
 )
+
+// defaultMuTest serializes the tests that swap the package default printer. They can still run
+// in parallel with the other tests, but two of them at once would print into each other's buffer.
+var defaultMuTest sync.Mutex
+
+// swapDefault takes defaultMuTest and returns a function that restores the original default printer
+// and releases it.
+func swapDefault(t *testing.T) func() {
+	t.Helper()
+	defaultMuTest.Lock()
+	original := GetDefault()
+	return func() {
+		SetDefault(original)
+		defaultMuTest.Unlock()
+	}
+}
 
 func TestNew(t *testing.T) {
 	var buf bytes.Buffer
@@ -396,8 +413,7 @@ func TestToolEmptyLine(t *testing.T) {
 
 func TestStaticFunctions(t *testing.T) {
 	// Save original default printer
-	original := defaultPrinter
-	defer func() { defaultPrinter = original }()
+	defer swapDefault(t)()
 
 	var buf bytes.Buffer
 	SetDefault(New(&buf, true))
@@ -558,11 +574,10 @@ func TestPrintRaw_MultilineWithEmptyLines(t *testing.T) {
 }
 
 func TestPrintRaw_StaticFunction(t *testing.T) {
-	// Not parallel: it swaps the package default printer, which other tests use too.
+	t.Parallel()
 
 	// Save original default printer
-	original := defaultPrinter
-	defer func() { defaultPrinter = original }()
+	defer swapDefault(t)()
 
 	var buf bytes.Buffer
 	SetDefault(New(&buf, true))
@@ -577,11 +592,10 @@ func TestPrintRaw_StaticFunction(t *testing.T) {
 }
 
 func TestPrintRaw_StaticFunction_VerboseOff(t *testing.T) {
-	// Not parallel: it swaps the package default printer, which other tests use too.
+	t.Parallel()
 
 	// Save original default printer
-	original := defaultPrinter
-	defer func() { defaultPrinter = original }()
+	defer swapDefault(t)()
 
 	var buf bytes.Buffer
 	SetDefault(New(&buf, false))
@@ -660,5 +674,32 @@ func TestPrintRaw_Cyrillic(t *testing.T) {
 	expected := "\n Привет, мир!\n\n"
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
+	}
+}
+
+func TestPrinter_ConcurrentUse(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+	p := New(&buf, true)
+
+	const workers, rounds = 8, 50
+	var wg sync.WaitGroup
+	for i := range workers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for range rounds {
+				p.Verbose(true)
+				p.PrintRaw("block")
+				p.Info("line", "worker", i)
+			}
+		}()
+	}
+	wg.Wait()
+
+	// Every PrintRaw block arrives whole, with no other caller's line inside it.
+	if got := strings.Count(buf.String(), "\n block\n\n"); got != workers*rounds {
+		t.Errorf("expected %d whole PrintRaw blocks, got %d", workers*rounds, got)
 	}
 }
