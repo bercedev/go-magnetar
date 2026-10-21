@@ -558,7 +558,7 @@ func TestPrintRaw_MultilineWithEmptyLines(t *testing.T) {
 }
 
 func TestPrintRaw_StaticFunction(t *testing.T) {
-	t.Parallel()
+	// Not parallel: it swaps the package default printer, which other tests use too.
 
 	// Save original default printer
 	original := defaultPrinter
@@ -577,7 +577,7 @@ func TestPrintRaw_StaticFunction(t *testing.T) {
 }
 
 func TestPrintRaw_StaticFunction_VerboseOff(t *testing.T) {
-	t.Parallel()
+	// Not parallel: it swaps the package default printer, which other tests use too.
 
 	// Save original default printer
 	original := defaultPrinter
