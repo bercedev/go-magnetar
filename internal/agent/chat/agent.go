@@ -742,14 +742,18 @@ func (a *ChatAgent) Run(state *plugin.State) error {
 // printTiming prints how long an answer took when /timing or --enable-timing turned it on.
 func printTiming(state *plugin.State, elapsed time.Duration) {
 	if state.TimingEnabled.Load() {
-		fmt.Fprintf(os.Stdout, "— Execution time: %s\n\n", formatDuration(elapsed))
+		fmt.Fprintf(os.Stdout, "— Execution time: %s\n\n", printDuration(elapsed))
 	}
 }
 
-// formatDuration renders d as "850ms" under a second and "1.234s" from a second up.
-func formatDuration(d time.Duration) string {
-	if d < time.Second {
-		return fmt.Sprintf("%dms", d.Milliseconds())
+// printDuration renders d rounded to the millisecond, or to the second from 10s up.
+func printDuration(d time.Duration) string {
+	if d >= time.Second*10 {
+		d = d.Round(time.Second)
+		return d.String()
+	} else {
+		d = d.Round(time.Millisecond)
 	}
-	return fmt.Sprintf("%.3fs", d.Seconds())
+
+	return d.String()
 }

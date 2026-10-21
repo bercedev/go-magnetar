@@ -232,7 +232,7 @@ Display or toggle execution time measurement:
 ```
 > /timing on
 Execution time measurement enabled.
-— Execution time: 0ms
+— Execution time: 0s
 
 > What is Go?
 Go is a statically typed, compiled programming language designed for simplicity, reliability, and efficiency.
@@ -265,9 +265,9 @@ Timing is displayed after each response as a single line:
 — Execution time: 1.234s
 ```
 
-Duration is formatted as:
-- `Xms` for durations < 1 second
-- `X.XXXs` for durations ≥ 1 second
+Duration is Go's `time.Duration` text:
+- rounded to the millisecond below 10 seconds (`850ms`, `1.234s`)
+- rounded to the second from 10 seconds up (`12s`, `1m16s`)
 
 ## Command Syntax
 
