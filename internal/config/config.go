@@ -165,6 +165,10 @@ func (c *Config) SetProfile(profile string) error {
 	profiles := c.Profiles()
 
 	if slice.ContainsAny(profiles, profile) {
+		// String("profile") reads the koanf key, so it has to follow the switch too.
+		if err := c.cfg.Set("profile", profile); err != nil {
+			return err
+		}
 		c.profile = profile
 		return nil
 	}
